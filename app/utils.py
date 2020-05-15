@@ -1,11 +1,12 @@
 import jwt
 import smtplib
 from functools import wraps
-from flask import jsonify, request, render_template
+from flask import jsonify, request, render_template, current_app
 from datetime import datetime, timedelta
-from app.models import User
+from app.models import User, db
 from threading import Thread
 from flask_mail import Message, Mail
+from concurrent.futures import ThreadPoolExecutor
 import random
 import math
 
@@ -31,7 +32,7 @@ def protected(f):
         current_user = User.query.filter_by(id=data['id']).first()
         if not current_user:
             return jsonify({'error': {'message': 'malformed token', 'code': 401}, 'data': None})
-        if current_user.code:
+        if not current_user.verified:
             return jsonify({'error': {'message': 'please verify account', 'code': 400}, 'data': None})
 
         return f(current_user, *args, **kwargs)
@@ -46,30 +47,24 @@ def generate_token(data, expire=timedelta(days=0, seconds=3600)):
             'iat': datetime.utcnow(),
             'sub': data
         }
-        return jwt.encode(
+        token = jwt.encode(
             payload,
             SECRET,
             algorithm='HS256'
         )
+        return token.decode("utf-8")
     except Exception as e:
         return e
 
 
 def decode_token(token):
     try:
-        payload = jwt.decode(token, SECRET)
+        payload = jwt.decode(token, SECRET, algorithm='HS256')
         return payload['sub']
     except jwt.ExpiredSignatureError:
         return 'Signature expired'
     except jwt.InvalidTokenError:
         return 'Invalid token'
-
-
-def send_mail(subject, recipient, template, **kwargs):
-    msg = Message(
-        subject, sender='igwedanielchi@gmail.com', recipients=[recipient])
-    msg.html = render_template(template, **kwargs)
-    mail.send(msg)
 
 
 def generate_code():
@@ -79,3 +74,18 @@ def generate_code():
         index = math.floor(random.random() * 10)
         random_str += str(digits[index])
     return random_str
+
+
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+    # print('sent')
+
+
+def send_mail(subject, recipient, template, **kwargs):
+    app = current_app._get_current_object()
+    msg = Message(
+        subject, sender='igwedanielchi@gmail.com', recipients=[recipient])
+    msg.html = render_template(template, **kwargs)
+    with ThreadPoolExecutor(3) as executor:
+        executor.submit(lambda arg: send_async_email(*arg), [app, msg])

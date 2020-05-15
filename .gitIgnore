@@ -1,3 +1,6 @@
 __pycache__
+__pytest_cache
 .vscode
 database.db
+.env
+.noseids

@@ -1,7 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from datetime import datetime
-
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
+from flask_marshmallow import Marshmallow
+from werkzeug.security import generate_password_hash
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -12,6 +13,10 @@ class Token(db.Model):
     user_id = db.Column(db.Integer)
     code = db.Column(db.String(6))
     issuedAt = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 
 
 followers = db.Table('followers',
@@ -29,7 +34,7 @@ class User(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     code = db.Column(db.String(6))
-    verified=db.Column(db.Boolean,default=False)
+    verified = db.Column(db.Boolean, default=False)
     tweets = db.relationship('Tweet', backref='user', lazy='dynamic')
     followers_count = db.Column(db.Integer, default=0)
     followed_count = db.Column(db.Integer, default=0)
@@ -38,6 +43,10 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 
     def follow(self, user):
         if not self.is_following(user):
@@ -54,6 +63,14 @@ class User(db.Model):
     def is_following(self, user):
         return self.followed.filter(
             followers.c.followed_id == user.id).count() > 0
+
+
+def hashPassword(mapper, connection, target):
+    target.password_hash = generate_password_hash(target.password_hash)
+
+
+event.listen(
+    User, 'before_insert', hashPassword)
 
 
 class UserSchema(ma.Schema):
@@ -76,9 +93,14 @@ class Tweet(db.Model):
         lazy='dynamic')
     reply_count = db.Column(db.Integer, default=0)
 
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
 
 class TweetSchema(ma.Schema):
-    in_reply_to_status = ma.Nested("self", exclude=('in_reply_to_status',))
+    in_reply_to_status = ma.Nested(
+        lambda: TweetSchema(exclude=('in_reply_to_status',)))
     # user=ma.Nested(UserSchema,exclude=("followers","followed","tweets"))
     user = ma.Nested(UserSchema, exclude=("tweets",))
 
