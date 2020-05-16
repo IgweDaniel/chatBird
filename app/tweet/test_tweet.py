@@ -55,7 +55,7 @@ class TweetRouteTestCase(unittest.TestCase):
         self.assertEqual(rv.status_code, 201)
         self.assertIn('success', str(result_in_json['data']))
         with self.app.app_context():
-            replies = Tweet.query.all()[0].replies.all()
+            replies = Tweet.query.filter_by(id=status.id).first().replies.all()
             self.assertEqual(len(replies), 1)
             self.assertEqual(
                 replies[0].in_reply_to_status.text, self.test_status['text'])

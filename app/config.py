@@ -10,10 +10,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config(object):
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(
-        basedir, 'database.db')
-
-    DATABASE_URI = 'sqlite:///:memory:'
     MAIL_PORT = 587
     MAIL_SERVER = 'smtp.googlemail.com'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
@@ -24,13 +20,15 @@ class Config(object):
 
 
 class ProductionConfig(Config):
-    DATABASE_URI = 'mysql://user@localhost/foo'
+    SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{os.getenv("DB_USER")}:{os.getenv("DB_PW")}@localhost:5432/chatbird'
     MAIL_USE_TLS = True
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{os.getenv("DB_USER")}:{os.getenv("DB_PW")}@localhost:5432/chatbird'
 
 
 class TestingConfig(Config):
     TESTING = True
+    SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{os.getenv("DB_USER")}:{os.getenv("DB_PW")}@localhost:5432/postgres'
