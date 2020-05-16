@@ -20,5 +20,7 @@ def create_app(config):
         db.create_all()
 
     from app.user import user as userBluePrint
+    from app.tweet import status as statusBluePrint
     app.register_blueprint(userBluePrint)
+    app.register_blueprint(statusBluePrint)
     return app

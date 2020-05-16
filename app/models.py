@@ -102,7 +102,8 @@ class TweetSchema(ma.Schema):
     in_reply_to_status = ma.Nested(
         lambda: TweetSchema(exclude=('in_reply_to_status',)))
     # user=ma.Nested(UserSchema,exclude=("followers","followed","tweets"))
-    user = ma.Nested(UserSchema, exclude=("tweets",))
+    # user = ma.Nested(UserSchema, exclude=("tweets",))
+    user = ma.Nested(UserSchema)
 
     class Meta:
         fields = ("text", "id", "timestamp", "in_reply_to_status", "user")
