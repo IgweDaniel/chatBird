@@ -4,3 +4,4 @@ __pytest_cache
 database.db
 .env
 .noseids
+
