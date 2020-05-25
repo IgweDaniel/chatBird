@@ -5,3 +5,4 @@ database.db
 .env
 .noseids
 Pipfile
+.js

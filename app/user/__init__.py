@@ -164,3 +164,11 @@ def get_followed():
     u = User.query.all()[0].followed.all()
     user = user_serializer.dump(u)
     return jsonify({'data': user})
+
+
+# @user.route('/check', methods=['GET'])
+# def testing_stuff():
+#     u = User.query.filter_by(id=1).first()
+#     user = user_serializer.dump(u)
+#     # print(user)
+#     return jsonify({'data': {'replies': "trye"}, 'error': None}), 200
