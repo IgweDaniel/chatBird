@@ -1,10 +1,8 @@
 import jwt
-import smtplib
 from functools import wraps
 from flask import jsonify, request, render_template, current_app
 from datetime import datetime, timedelta
 from app.models import User, db
-from threading import Thread
 from flask_mail import Message, Mail
 from concurrent.futures import ThreadPoolExecutor
 import random
@@ -59,7 +57,7 @@ def generate_token(data, expire=timedelta(days=0, seconds=3600)):
 
 def decode_token(token):
     try:
-        payload = jwt.decode(token, SECRET, algorithm='HS256')
+        payload = jwt.decode(token, SECRET, algorithms='HS256')
         return payload['sub']
     except jwt.ExpiredSignatureError:
         return 'Signature expired'
